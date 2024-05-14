@@ -4,11 +4,11 @@
 #include <stack>
 #include <unordered_set>
 
-const int CELL_SIZE = 20; // Size of each cell in pixels
 const int WIDTH = 800;    // Width of the window
 const int HEIGHT = 600;   // Height of the window
-const int ROWS = HEIGHT / CELL_SIZE;
-const int COLS = WIDTH / CELL_SIZE;
+const int ROWS = 30;      // Number of rows in the maze
+const int COLS = 40;      // Number of columns in the maze
+const int BORDER_SIZE = 5; // Size of the border around the maze
 
 class Cell {
 public:
@@ -90,35 +90,43 @@ void Maze::generate() {
 }
 
 void Maze::draw(sf::RenderWindow& window) {
+    // Calculate cell size based on window dimensions
+    float cellSizeX = static_cast<float>(WIDTH - 2 * BORDER_SIZE) / COLS;
+    float cellSizeY = static_cast<float>(HEIGHT - 2 * BORDER_SIZE) / ROWS;
+
     for (int i = 0; i < cells.size(); ++i) {
-        int x = cells[i].col * CELL_SIZE;
-        int y = cells[i].row * CELL_SIZE;
+        int x = cells[i].col * cellSizeX + BORDER_SIZE;
+        int y = cells[i].row * cellSizeY + BORDER_SIZE;
 
-        if (cells[i].walls[0]) { // top
-            sf::RectangleShape topWall(sf::Vector2f(CELL_SIZE, 1));
-            topWall.setPosition(x, y);
-            window.draw(topWall);
-        }
-
-        if (cells[i].walls[1]) { // right
-            sf::RectangleShape rightWall(sf::Vector2f(1, CELL_SIZE));
-            rightWall.setPosition(x + CELL_SIZE, y);
-            window.draw(rightWall);
-        }
-
-        if (cells[i].walls[2]) { // bottom
-            sf::RectangleShape bottomWall(sf::Vector2f(CELL_SIZE, 1));
-            bottomWall.setPosition(x, y + CELL_SIZE);
-            window.draw(bottomWall);
-        }
-
-        if (cells[i].walls[3]) { // left
-            sf::RectangleShape leftWall(sf::Vector2f(1, CELL_SIZE));
-            leftWall.setPosition(x, y);
-            window.draw(leftWall);
+        // Draw walls
+        for (int j = 0; j < 4; ++j) {
+            if (cells[i].walls[j]) {
+                sf::RectangleShape wall;
+                switch (j) {
+                case 0: // top
+                    wall.setSize(sf::Vector2f(cellSizeX, 1));
+                    wall.setPosition(x, y);
+                    break;
+                case 1: // right
+                    wall.setSize(sf::Vector2f(1, cellSizeY));
+                    wall.setPosition(x + cellSizeX, y);
+                    break;
+                case 2: // bottom
+                    wall.setSize(sf::Vector2f(cellSizeX, 1));
+                    wall.setPosition(x, y + cellSizeY);
+                    break;
+                case 3: // left
+                    wall.setSize(sf::Vector2f(1, cellSizeY));
+                    wall.setPosition(x, y);
+                    break;
+                }
+                wall.setFillColor(sf::Color::White); // Set wall color to black
+                window.draw(wall);
+            }
         }
     }
 }
+
 
 bool Maze::isWall(int row, int col, int dir) {
     if (row < 0 || col < 0 || row >= ROWS || col >= COLS)
@@ -163,9 +171,13 @@ void Player::move(int dx, int dy) {
 }
 
 void Player::draw(sf::RenderWindow& window) {
-    sf::CircleShape playerShape(CELL_SIZE / 2);
+    // Calculate cell size based on window dimensions
+    float cellSizeX = static_cast<float>(WIDTH - 2 * BORDER_SIZE) / COLS;
+    float cellSizeY = static_cast<float>(HEIGHT - 2 * BORDER_SIZE) / ROWS;
+
+    sf::CircleShape playerShape(std::min(cellSizeX, cellSizeY) / 2);
     playerShape.setFillColor(sf::Color::Green);
-    playerShape.setPosition(col * CELL_SIZE + CELL_SIZE / 4, row * CELL_SIZE + CELL_SIZE / 4);
+    playerShape.setPosition(col * cellSizeX + cellSizeX / 4 + BORDER_SIZE, row * cellSizeY + cellSizeY / 4 + BORDER_SIZE);
     window.draw(playerShape);
 }
 
@@ -205,3 +217,6 @@ int main() {
 
     return 0;
 }
+
+
+
