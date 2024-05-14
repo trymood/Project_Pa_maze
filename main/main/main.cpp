@@ -29,12 +29,22 @@ public:
     Maze();
     void generate();
     void draw(sf::RenderWindow& window);
+    bool isWall(int row, int col, int dir); // Check if there's a wall in a specific direction
 private:
     std::vector<Cell> cells;
 
     int getIndex(int row, int col);
     bool isValid(int row, int col);
     void connectNeighbors(Cell& current, Cell& neighbor);
+};
+
+class Player {
+public:
+    Player(int r, int c) : row(r), col(c) {}
+    void move(int dx, int dy); // Move the player
+    void draw(sf::RenderWindow& window); // Draw the player
+public:
+    int row, col;
 };
 
 Maze::Maze() {
@@ -110,6 +120,12 @@ void Maze::draw(sf::RenderWindow& window) {
     }
 }
 
+bool Maze::isWall(int row, int col, int dir) {
+    if (row < 0 || col < 0 || row >= ROWS || col >= COLS)
+        return true; // Treat border as a wall
+    return cells[getIndex(row, col)].walls[dir];
+}
+
 int Maze::getIndex(int row, int col) {
     return row * COLS + col;
 }
@@ -141,6 +157,18 @@ void Maze::connectNeighbors(Cell& current, Cell& neighbor) {
     }
 }
 
+void Player::move(int dx, int dy) {
+    row += dy;
+    col += dx;
+}
+
+void Player::draw(sf::RenderWindow& window) {
+    sf::CircleShape playerShape(CELL_SIZE / 2);
+    playerShape.setFillColor(sf::Color::Green);
+    playerShape.setPosition(col * CELL_SIZE + CELL_SIZE / 4, row * CELL_SIZE + CELL_SIZE / 4);
+    window.draw(playerShape);
+}
+
 int main() {
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Maze");
     window.setFramerateLimit(60);
@@ -148,15 +176,30 @@ int main() {
     Maze maze;
     maze.generate();
 
+    Player player(0, 0);
+
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
+            else if (event.type == sf::Event::KeyPressed) {
+                int dx = 0, dy = 0;
+                if (event.key.code == sf::Keyboard::Up && !maze.isWall(player.row - 1, player.col, 2))
+                    dy = -1;
+                else if (event.key.code == sf::Keyboard::Down && !maze.isWall(player.row + 1, player.col, 0))
+                    dy = 1;
+                else if (event.key.code == sf::Keyboard::Left && !maze.isWall(player.row, player.col - 1, 1))
+                    dx = -1;
+                else if (event.key.code == sf::Keyboard::Right && !maze.isWall(player.row, player.col + 1, 3))
+                    dx = 1;
+                player.move(dx, dy);
+            }
         }
 
         window.clear(sf::Color::Black);
         maze.draw(window);
+        player.draw(window);
         window.display();
     }
 
