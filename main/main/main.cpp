@@ -3,6 +3,7 @@
 #include <iostream>
 #include <stack>
 #include <unordered_set>
+#include <cstdlib> // For rand()
 
 const int WIDTH = 800;    // Width of the window
 const int HEIGHT = 600;   // Height of the window
@@ -28,6 +29,7 @@ class Maze {
 public:
     Maze();
     void generate();
+    void generateExit();
     void draw(sf::RenderWindow& window);
     bool isWall(int row, int col, int dir); // Check if there's a wall in a specific direction
 private:
@@ -53,6 +55,32 @@ Maze::Maze() {
         for (int j = 0; j < COLS; ++j) {
             cells.push_back(Cell(i, j));
         }
+    }
+}
+
+void Maze::generateExit() {
+    // Randomly select a border side (0: top, 1: right, 2: bottom, 3: left)
+    int side = rand() % 4;
+
+    // Randomly select a cell on the chosen side
+    int cellIndex;
+    switch (side) {
+    case 0: // top side
+        cellIndex = rand() % COLS;
+        connectNeighbors(cells[cellIndex], cells[cellIndex + COLS]);
+        break;
+    case 1: // right side
+        cellIndex = COLS * (ROWS - 1) + (rand() % COLS);
+        connectNeighbors(cells[cellIndex], cells[cellIndex + 1]);
+        break;
+    case 2: // bottom side
+        cellIndex = COLS * (ROWS - 1) + (rand() % COLS);
+        connectNeighbors(cells[cellIndex], cells[cellIndex - COLS]);
+        break;
+    case 3: // left side
+        cellIndex = rand() % COLS;
+        connectNeighbors(cells[cellIndex], cells[cellIndex - 1]);
+        break;
     }
 }
 
@@ -87,6 +115,8 @@ void Maze::generate() {
             break;
         }
     }
+
+    generateExit(); // Generate exit after maze generation
 }
 
 void Maze::draw(sf::RenderWindow& window) {
@@ -120,12 +150,22 @@ void Maze::draw(sf::RenderWindow& window) {
                     wall.setPosition(x, y);
                     break;
                 }
-                wall.setFillColor(sf::Color::White); // Set wall color to black
+                wall.setFillColor(sf::Color::White); // Set wall color to white
                 window.draw(wall);
             }
         }
+
+        // Draw exit cell
+        if (cells[i].row == ROWS - 1 && cells[i].col == COLS - 1) {
+            sf::RectangleShape exit;
+            exit.setSize(sf::Vector2f(cellSizeX, cellSizeY));
+            exit.setPosition(x, y);
+            exit.setFillColor(sf::Color::Red); // Set exit cell color to red
+            window.draw(exit);
+        }
     }
 }
+
 
 
 bool Maze::isWall(int row, int col, int dir) {
@@ -217,6 +257,8 @@ int main() {
 
     return 0;
 }
+
+
 
 
 
