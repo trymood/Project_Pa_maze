@@ -4,9 +4,6 @@
 #include <stack>
 #include <unordered_set>
 #include <cstdlib> // For rand()
-#include <string>
-#include <map>
-
 
 const int WIDTH = 800;    // Width of the window
 const int HEIGHT = 600;   // Height of the window
@@ -14,18 +11,11 @@ const int ROWS = 30;      // Number of rows in the maze
 const int COLS = 40;      // Number of columns in the maze
 const int BORDER_SIZE = 5; // Size of the border around the maze
 
-struct Question {
-    std::string question;
-    bool correctAnswer;
-};
-
-class Cell {
-public:
+struct Cell {
     int row, col;
     bool visited;
     bool walls[4]; // top, right, bottom, left
     bool checkpoint; // Indicates if the cell is a checkpoint
-    std::vector<Cell*> neighbors;
 
     Cell(int r, int c) : row(r), col(c), visited(false), checkpoint(false) {
         for (int i = 0; i < 4; ++i) {
@@ -34,7 +24,6 @@ public:
     }
 };
 
-
 class Maze {
 public:
     Maze();
@@ -42,13 +31,7 @@ public:
     void generateExit();
     void draw(sf::RenderWindow& window);
     bool isWall(int row, int col, int dir); // Check if there's a wall in a specific direction
-    bool answerQuestion(int row, int col, bool answer);
-
-
-    void setCheckpoints(const std::map<int, Question>& checkpointQuestions); // Set checkpoint questions
-    bool isCheckpoint(int row, int col);
-    Question getQuestion(int row, int col);
-
+    bool isCheckpoint(int row, int col); // Check if a cell is a checkpoint
 
 private:
     std::vector<Cell> cells;
@@ -56,75 +39,15 @@ private:
     int getIndex(int row, int col);
     bool isValid(int row, int col);
     void connectNeighbors(Cell& current, Cell& neighbor);
-
-    std::unordered_set<int> checkpoints;
-    std::map<int, Question> checkpointQuestions;
-
-
-
-
 };
-
-
-
-
-bool ansQuestion(int row, int col, bool ans) {
-    Question question = getQuestion(row, col);
-    if (question.correctAnswer == ans) {
-        return true; // Correct answer
-    }
-    else {
-        return false; // Incorrect answer
-    }
-}
-
 
 class Player {
 public:
-    Player(int r, int c, int lives = 3) : row(r), col(c), lives(lives) {}
+    Player(int r, int c) : row(r), col(c) {}
     void move(int dx, int dy); // Move the player
     void draw(sf::RenderWindow& window); // Draw the player
-    void loseLife(); // Decrement player's life
-    int getLives() const; // Get player's remaining lives
-public:
+//private:
     int row, col;
-    int lives;
-};
-
-void Player::loseLife() {
-    lives--;
-}
-
-int Player::getLives() const {
-    return lives;
-}
-
-void Player::draw(sf::RenderWindow& window) {
-    // Draw the player
-
-}
-
-class GamePanel {
-public:
-    GamePanel(float x, float y, sf::Font& font) : font(font) {
-        livesText.setFont(font);
-        livesText.setCharacterSize(20);
-        livesText.setFillColor(sf::Color::White);
-        livesText.setPosition(x, y);
-        updateLives(3); // Initial lives
-    }
-
-    void updateLives(int lives) {
-        livesText.setString("Lives: " + std::to_string(lives));
-    }
-
-    void draw(sf::RenderWindow& window) {
-        window.draw(livesText);
-    }
-
-private:
-    sf::Text livesText;
-    sf::Font& font;
 };
 
 class Button {
@@ -141,7 +64,6 @@ public:
         m_text.setPosition(x + width / 8.5f, y + height / 1.5f);
     }
 
-
     void draw(sf::RenderWindow& window) {
         window.draw(m_rect);
         window.draw(m_text);
@@ -157,6 +79,8 @@ private:
     float m_width;
     float m_height;
 };
+
+
 
 class Menu {
 public:
@@ -178,42 +102,6 @@ Maze::Maze() {
         }
     }
 }
-
-
-
-
-void Maze::setCheckpoints(const std::map<int, Question>& checkpointQuestions) {
-    this->checkpointQuestions = checkpointQuestions;
-    for (const auto& pair : checkpointQuestions) {
-        checkpoints.insert(pair.first);
-        cells[pair.first].checkpoint = true;
-    }
-}
-
-Question Maze::getQuestion(int row, int col) {
-    int index = getIndex(row, col);
-    auto it = checkpointQuestions.find(index);
-    if (it != checkpointQuestions.end()) {
-        return it->second;
-    }
-    return { "", false }; // Default empty question
-}
-
-bool Maze::isCheckpoint(int row, int col) {
-    int index = getIndex(row, col);
-    return checkpoints.find(index) != checkpoints.end();
-}
-
-
-bool Maze::answerQuestion(int row, int col, bool answer) {
-    int index = getIndex(row, col);
-    auto it = checkpointQuestions.find(index);
-    if (it != checkpointQuestions.end()) {
-        return it->second.correctAnswer == answer;
-    }
-    return false;
-}
-
 
 void Maze::generateExit() {
     // Randomly select a border side (0: top, 1: right, 2: bottom, 3: left)
@@ -271,19 +159,16 @@ void Maze::generate() {
         else {
             break;
         }
-
-        for (int i = 0; i < 3; ++i) { // Change 3 to the desired number of checkpoints
-            int randRow = rand() % ROWS;
-            int randCol = rand() % COLS;
-            int index = getIndex(randRow, randCol);
-            checkpointQuestions[index] = { "Question " + std::to_string(i + 1), true }; // Modify the question accordingly
-            checkpoints.insert(index);
-            cells[index].checkpoint = true;
-        }
-
     }
 
     generateExit(); // Generate exit after maze generation
+
+    // Generate checkpoints
+    for (int i = 0; i < 8; ++i) { // 8 checkpointuri
+        int randRow = rand() % ROWS;
+        int randCol = rand() % COLS;
+        cells[getIndex(randRow, randCol)].checkpoint = true;
+    }
 }
 
 void Maze::draw(sf::RenderWindow& window) {
@@ -322,6 +207,14 @@ void Maze::draw(sf::RenderWindow& window) {
             }
         }
 
+        // Draw checkpoints
+        if (cells[i].checkpoint) {
+            sf::CircleShape checkpoint(3);
+            checkpoint.setFillColor(sf::Color::Yellow);
+            checkpoint.setPosition(x + cellSizeX / 2, y + cellSizeY / 2);
+            window.draw(checkpoint);
+        }
+
         // Draw exit cell
         if (cells[i].row == ROWS - 1 && cells[i].col == COLS - 1) {
             sf::RectangleShape exit;
@@ -337,6 +230,12 @@ bool Maze::isWall(int row, int col, int dir) {
     if (row < 0 || col < 0 || row >= ROWS || col >= COLS)
         return true; // Treat border as a wall
     return cells[getIndex(row, col)].walls[dir];
+}
+
+bool Maze::isCheckpoint(int row, int col) {
+    if (row < 0 || col < 0 || row >= ROWS || col >= COLS)
+        return false;
+    return cells[getIndex(row, col)].checkpoint;
 }
 
 int Maze::getIndex(int row, int col) {
@@ -386,6 +285,8 @@ void Player::draw(sf::RenderWindow& window) {
     window.draw(playerShape);
 }
 
+
+
 Menu::Menu() : startButton(WIDTH / 2.0f - 100.0f, 250.0f, 200.0f, 50.0f, "Start Game", font),
 exitButton(WIDTH / 2.0f - 100.0f, 350.0f, 200.0f, 50.0f, "      Exit", font) {
     if (!font.loadFromFile("arial.ttf")) {
@@ -408,7 +309,7 @@ void Menu::draw(sf::RenderWindow& window) {
     exitButton.draw(window);
 }
 
-int int Menu::handleInput(sf::RenderWindow& window) {
+int Menu::handleInput(sf::RenderWindow& window) {
     sf::Event event;
     while (window.pollEvent(event)) {
         if (event.type == sf::Event::Closed)
@@ -424,4 +325,66 @@ int int Menu::handleInput(sf::RenderWindow& window) {
         }
     }
     return 0; // No button clicked
+}
+
+int main() {
+    sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Maze");
+    window.setFramerateLimit(60);
+
+    Menu menu;
+    int menuResult = 0; // 0: Menu not yet shown, 1: Start game, -1: Exit game
+
+    while (window.isOpen()) {
+        if (menuResult == 0) {
+            window.clear(sf::Color::Black);
+            menu.draw(window);
+            window.display();
+
+            menuResult = menu.handleInput(window);
+        }
+        else if (menuResult == 1) {
+            Maze maze;
+            maze.generate();
+
+            Player player(0, 0);
+
+            while (window.isOpen()) {
+                sf::Event event;
+                while (window.pollEvent(event)) {
+                    if (event.type == sf::Event::Closed)
+                        window.close();
+                    else if (event.type == sf::Event::KeyPressed) {
+                        int dx = 0, dy = 0;
+                        if (event.key.code == sf::Keyboard::Up && !maze.isWall(player.row - 1, player.col, 2))
+                            dy = -1;
+                        else if (event.key.code == sf::Keyboard::Down && !maze.isWall(player.row + 1, player.col, 0))
+                            dy = 1;
+                        else if (event.key.code == sf::Keyboard::Left && !maze.isWall(player.row, player.col - 1, 1))
+                            dx = -1;
+                        else if (event.key.code == sf::Keyboard::Right && !maze.isWall(player.row, player.col + 1, 3))
+                            dx = 1;
+
+                        // Check for checkpoint
+                        if (maze.isCheckpoint(player.row + dy, player.col + dx)) {
+                            std::cout << "Checkpoint reached!" << std::endl;
+                            // Handle checkpoint logic here
+                        }
+
+                        player.move(dx, dy);
+                    }
+                }
+
+                window.clear(sf::Color::Black);
+                maze.draw(window);
+                player.draw(window);
+                window.display();
+            }
+            menuResult = 0; // Reset menu result after game ends
+        }
+        else if (menuResult == -1) {
+            window.close();
+        }
+    }
+
+    return 0;
 }
