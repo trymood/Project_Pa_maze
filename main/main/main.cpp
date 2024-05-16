@@ -20,6 +20,7 @@ struct Cell {
     bool walls[4];
     bool checkpoint;
 
+
     Cell(int r, int c) : row(r), col(c), visited(false), checkpoint(false) {
         for (int i = 0; i < 4; ++i) walls[i] = true;
     }
@@ -35,11 +36,12 @@ public:
     bool isWall(int row, int col, int dir);
     bool isCheckpoint(int row, int col);
     void removeCheckpoint(int row, int col);
+    const std::vector<Cell>& getCells() const;
+    int getIndex(int row, int col) const;
 
 private:
     std::vector<Cell> cells;
 
-    int getIndex(int row, int col);
     bool isValid(int row, int col);
     void connectNeighbors(Cell& current, Cell& neighbor);
 };
@@ -112,9 +114,13 @@ private:
 
 // Global list of questions
 std::vector<Question> questions = {
-    Question("What is 2 + 2?", "4"),
-    Question("What is the capital of France?", "Paris"),
-    Question("What is the color of the sky?", "Blue")
+    Question("What is the definition ofgreen / sustainable energy in comparison with renewable or clean energy ?\n 1.Sustainable energy includes any energy sourcewith little or no GHG emissions, that cannot be depleted and can remain viable forever; in comparison renewable energy,is exhaustible it uses resources from the earth that can naturally be replenished, but determine less GHG emissions, and clean energy exhaustible, but without GHG emissions\n 2.All these energy sources are without or with less GHG emissions, but Green / sustainable energy is exhaustible; by comparison Renewable energy sources and Clean energy sources are notexhaustible.\n 3. All these energy sources harm the environment by GHG emissions, but Green/ sustainable energy represents any energy so urce that cannot be depleted; in comparison Renewable energy can be depleted with natural system of regeneration, and Clean energy are exhaustible.\n 4. All these energy sources produce less or no GHG emissions, but Green / sustainable energy can be depleted, by comparison with the other two energy sources that can remain for ever ", "1"),
+    Question("What are the EU Commission objectives regarding green / sustainable energy?\n 1.The EU Commission objectives regarding green / sustainable energy are to totally replace thefossil fuels with wind and solarenergy by 2035.\n 2.The EU Commission objectives regarding green / sustainable energy comprise the totalbanning of fossil fuels and atomic energy and use of renewable sources of energy by 2040\n 3.The EU Commission objectives regarding green / sustainable energy are toincrease the Energyefficiency in any application, todevelopalltherenewable energy sources bylargeinvestmentexpenses and to diminish with a high speed the fossil fuels energy sources\n 4.The EU Commission objectives regarding green / sustainable energyare to increase the Energyefficiency in all the technological applications, and to replace the fossil fuels use to generate energyby green/ sustainable sources, including any renewable sources\n Alege raspunsul/raspunsurile corect/e lasand spatiu liber:", "3 4"),
+    Question("Which are the most important characteristics of renewable energy ?\n 1.The most important characteristics of renewable energy comprise : limited power source, not providing from natural resources, no or less GHG emissions, important waste generation, low investment costs\n 2.The most important characteristics of renewable energy are the high carbon Footprint, high GHG emissions, important impact on pollution.\n 3.The most important characteristics of renewable energy can be considered : decrease of carbon Footprint, decrease of GHG emissions, energy security, improving of public health, positive impacton pollution, but high investment costs, long-term affordable 4. The most important characteristcs of renewable energy are : the energy sources are exhaustible, without natural systems to be replenished, but with less GHG emissions, so with positive impact on pollution.\n", "3"),
+    Question("What are the limitations of wind energy technology ?\n 1.The wind energy technology has no limitations from the economical, technological or environmental points of view.\n 2.The wind energy technology has high costs of converting wind energy into electric energy, it is not technological ready for large applications, and it is not affordable in many places.\n 3.The wind technology has several important limitations : the reliability and lifetime of wind turbines, noise pollution, birds’ collision,ice accumulation. (T)A4.The wind energy technology limited due to raining or snowing periods, and not accepted by communities with strong traditional behavior.\n", "3"),
+    Question("The hydropower (hydroelectric energy) can be considered as a Green / sustainable energy source ?\n 1.The hydropower is one of the main sources to replace the fossil fuel energy , so it can be considered as Green / sustainable energy source.\n 2.The hydropower is not a Sustainable energy source, but it is the second largest Renewable energy source.\n 3.Hydropower is fueled by water, making it a clean source of energy, without GHG emissions, but it is not sustainable, nor renewable.\n 4. Hydroelectric energy is a form of renewable energy that uses the power of moving water to generate electricity , but it is not sustainable or green\n", "2 4"),
+    Question("What are the main characteristics of a biofuel ?\n 1.Biofuel is considered any fuel derived from biomass, being a source of renewable energy, environmentally benign, but with economic and environmental costs associated with the refining process.\n 2.Biofuel is considered any fuel derived from natural sources, so it can be considered as green / sustainable energy\n 3.Biofuel is any fuel withless greenhouse gases(GHG) emissions, derived from practically not replenished sources.\n 4.Biofuel is considered as sustainable energy source, representing any fuel providing from cost-effective biomass transformation, with less GHG emissions\n", "1"),
+    Question("What is the definition of green hydrogen?\n 1.Green hydrogen is the hydrogen produced by the electrolysis of water, using electricity generated from any source of energy. 2.Green hydrogen is the hydrogen accumulated in natural reservoirs under the Earth mantel.\n 3. Green hydrogen is hydrogen produced by the electrolysis of water , using electricity generated only from renewable sources.\n A4.Green hydrogen is the hydrogen produced by the electrolysis of water, and theCO2 emissions due to the use of electricity generated with fossil fuels are subject to underground storage.\n ", "3")
 };
 
 sf::Font& Menu::getFont() {
@@ -233,7 +239,11 @@ void Maze::removeCheckpoint(int row, int col) {
     cells[getIndex(row, col)].checkpoint = false;
 }
 
-int Maze::getIndex(int row, int col) {
+const std::vector<Cell>& Maze::getCells() const {
+    return cells;
+}
+
+int Maze::getIndex(int row, int col) const {
     return row * COLS + col;
 }
 
@@ -355,7 +365,9 @@ int main() {
 
                 if (maze.isCheckpoint(player.row, player.col))
                 {
-                    int questionIndex = rand() % questions.size();
+                    const std::vector<Cell>& cells = maze.getCells();
+                    int index = maze.getIndex(player.row, player.col);
+                    int questionIndex = index % questions.size(); // Use the index of the checkpoint to get the corresponding question
                     std::string question = questions[questionIndex].getQuestion();
                     std::string answer;
                     std::cout << question << "\n";
@@ -365,7 +377,7 @@ int main() {
                         std::cout << "Correct!\n";
                     }
                     else {
-                        std::cout << "Wrong! Try again later.\n";
+                        std::cout << "Wrong! Try again!.\n";
                         player.row = 0;
                         player.col = 0;
                     }
