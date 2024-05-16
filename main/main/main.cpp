@@ -145,19 +145,29 @@ int main() {
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Maze");
     window.setFramerateLimit(60);
 
+    Menu menu;
+    int menuResult = 0; // 0: Menu not yet shown, 1: Start game, -1: Exit game
+
+    while (window.isOpen()) {
+        if (menuResult == 0) {
+            window.clear(sf::Color::Black);
+            menu.draw(window);
+            window.display();
+
+            menuResult = menu.handleInput(window);
+        }
+        else if (menuResult == 1) {
     Maze maze;
     maze.generate();
 
     while (window.isOpen()) {
-        sf::Event event;
-        while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed)
+                // Game logic (same as before)
+            }
+            menuResult = 0; // Reset menu result after game ends
+        }
+        else if (menuResult == -1) {
                 window.close();
         }
-
-        window.clear(sf::Color::Black);
-        maze.draw(window);
-        window.display();
     }
 
     return 0;
