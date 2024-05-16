@@ -87,12 +87,18 @@ public:
     Menu();
     void draw(sf::RenderWindow& window);
     int handleInput(sf::RenderWindow& window);
+    friend std::string askQuestion(sf::RenderWindow& window, sf::Font& font, const std::string& question);
+    sf::Font& getFont(); // New member function to access the font
 private:
     sf::Text title;
     sf::Font font;
     Button startButton;
     Button exitButton;
 };
+
+sf::Font& Menu::getFont() {
+    return font;
+}
 
 Maze::Maze() {
     // Initialize the cells
@@ -163,12 +169,26 @@ void Maze::generate() {
 
     generateExit(); // Generate exit after maze generation
 
-    // Generate checkpoints
-    for (int i = 0; i < 8; ++i) { // 8 checkpointuri
-        int randRow = rand() % ROWS;
-        int randCol = rand() % COLS;
-        cells[getIndex(randRow, randCol)].checkpoint = true;
+    // Define the positions of the checkpoints
+    std::vector<std::pair<int, int>> checkpointPositions = {
+        {1,3},
+        {8,22},
+        {13,15},
+        {7,0},
+        {15,7},
+        {29,11},
+        {21,39},
+        {22,27}
+        // Add more checkpoint positions as needed
+    };
+
+    // Set the checkpoints at the specified positions
+    for (const auto& pos : checkpointPositions) {
+        int row = pos.first;
+        int col = pos.second;
+        cells[getIndex(row, col)].checkpoint = true;
     }
+
 }
 
 void Maze::draw(sf::RenderWindow& window) {
@@ -309,6 +329,45 @@ void Menu::draw(sf::RenderWindow& window) {
     exitButton.draw(window);
 }
 
+// Define a function to ask a question using SFML
+std::string askQuestion(sf::RenderWindow& window, sf::Font& font, const std::string& question) {
+    // Create a text object to display the question
+    sf::Text questionText(question, font, 30);
+    questionText.setFillColor(sf::Color::White);
+    questionText.setPosition(100, 100); // Adjust position as needed
+
+    // Create a text input field for the player's answer
+    std::string userAnswer;
+    sf::Text answerText("", font, 30);
+    answerText.setFillColor(sf::Color::White);
+    answerText.setPosition(100, 200); // Adjust position as needed
+
+    while (window.isOpen()) {
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed)
+                window.close();
+            if (event.type == sf::Event::TextEntered) {
+                if (event.text.unicode < 128) {
+                    userAnswer += static_cast<char>(event.text.unicode);
+                    answerText.setString(userAnswer);
+                }
+            }
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter) {
+                return userAnswer;
+            }
+        }
+
+        window.clear(sf::Color::Black);
+        window.draw(questionText);
+        window.draw(answerText);
+        window.display();
+    }
+
+    return "";
+}
+
+
 int Menu::handleInput(sf::RenderWindow& window) {
     sf::Event event;
     while (window.pollEvent(event)) {
@@ -368,6 +427,8 @@ int main() {
                         if (maze.isCheckpoint(player.row + dy, player.col + dx)) {
                             std::cout << "Checkpoint reached!" << std::endl;
                             // Handle checkpoint logic here
+                            std::string userAnswer = askQuestion(window, menu.getFont(), "What is the capital of France?");
+                                // Check the user's answer here and proceed accordingly
                         }
 
                         player.move(dx, dy);
