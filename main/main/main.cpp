@@ -1,3 +1,4 @@
+
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <iostream>
@@ -11,14 +12,13 @@ const int ROWS = 30;      // Number of rows in the maze
 const int COLS = 40;      // Number of columns in the maze
 const int BORDER_SIZE = 5; // Size of the border around the maze
 
-class Cell {
-public:
+struct Cell {
     int row, col;
     bool visited;
     bool walls[4]; // top, right, bottom, left
-    std::vector<Cell*> neighbors;
+    bool checkpoint; // Indicates if the cell is a checkpoint
 
-    Cell(int r, int c) : row(r), col(c), visited(false) {
+    Cell(int r, int c) : row(r), col(c), visited(false), checkpoint(false) {
         for (int i = 0; i < 4; ++i) {
             walls[i] = true;
         }
@@ -32,6 +32,8 @@ public:
     void generateExit();
     void draw(sf::RenderWindow& window);
     bool isWall(int row, int col, int dir); // Check if there's a wall in a specific direction
+    bool isCheckpoint(int row, int col); // Check if a cell is a checkpoint
+
 private:
     std::vector<Cell> cells;
 
@@ -45,7 +47,7 @@ public:
     Player(int r, int c) : row(r), col(c) {}
     void move(int dx, int dy); // Move the player
     void draw(sf::RenderWindow& window); // Draw the player
-public:
+    //private:
     int row, col;
 };
 
@@ -63,7 +65,6 @@ public:
         m_text.setPosition(x + width / 8.5f, y + height / 1.5f);
     }
 
-
     void draw(sf::RenderWindow& window) {
         window.draw(m_rect);
         window.draw(m_text);
@@ -79,6 +80,8 @@ private:
     float m_width;
     float m_height;
 };
+
+
 
 class Menu {
 public:
@@ -160,6 +163,13 @@ void Maze::generate() {
     }
 
     generateExit(); // Generate exit after maze generation
+
+    // Generate checkpoints
+    for (int i = 0; i < 8; ++i) { // 8 checkpointuri
+        int randRow = rand() % ROWS;
+        int randCol = rand() % COLS;
+        cells[getIndex(randRow, randCol)].checkpoint = true;
+    }
 }
 
 void Maze::draw(sf::RenderWindow& window) {
@@ -198,6 +208,14 @@ void Maze::draw(sf::RenderWindow& window) {
             }
         }
 
+        // Draw checkpoints
+        if (cells[i].checkpoint) {
+            sf::CircleShape checkpoint(3);
+            checkpoint.setFillColor(sf::Color::Yellow);
+            checkpoint.setPosition(x + cellSizeX / 2, y + cellSizeY / 2);
+            window.draw(checkpoint);
+        }
+
         // Draw exit cell
         if (cells[i].row == ROWS - 1 && cells[i].col == COLS - 1) {
             sf::RectangleShape exit;
@@ -213,6 +231,12 @@ bool Maze::isWall(int row, int col, int dir) {
     if (row < 0 || col < 0 || row >= ROWS || col >= COLS)
         return true; // Treat border as a wall
     return cells[getIndex(row, col)].walls[dir];
+}
+
+bool Maze::isCheckpoint(int row, int col) {
+    if (row < 0 || col < 0 || row >= ROWS || col >= COLS)
+        return false;
+    return cells[getIndex(row, col)].checkpoint;
 }
 
 int Maze::getIndex(int row, int col) {
@@ -261,6 +285,8 @@ void Player::draw(sf::RenderWindow& window) {
     playerShape.setPosition(col * cellSizeX + cellSizeX / 4 + BORDER_SIZE, row * cellSizeY + cellSizeY / 4 + BORDER_SIZE);
     window.draw(playerShape);
 }
+
+
 
 Menu::Menu() : startButton(WIDTH / 2.0f - 100.0f, 250.0f, 200.0f, 50.0f, "Start Game", font),
 exitButton(WIDTH / 2.0f - 100.0f, 350.0f, 200.0f, 50.0f, "      Exit", font) {
@@ -338,6 +364,13 @@ int main() {
                             dx = -1;
                         else if (event.key.code == sf::Keyboard::Right && !maze.isWall(player.row, player.col + 1, 3))
                             dx = 1;
+
+                        // Check for checkpoint
+                        if (maze.isCheckpoint(player.row + dy, player.col + dx)) {
+                            std::cout << "Checkpoint reached!" << std::endl;
+                            // Handle checkpoint logic here
+                        }
+
                         player.move(dx, dy);
                     }
                 }
