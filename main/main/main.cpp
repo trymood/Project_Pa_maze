@@ -320,7 +320,6 @@ int Menu::handleInput(sf::RenderWindow& window) {
     }
     return 0;
 }
-
 int main() {
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Maze Game");
     window.setFramerateLimit(60);
@@ -330,6 +329,7 @@ int main() {
     Player player(0, 0);
 
     bool gameStarted = false;
+    bool gameWon = false;
 
     while (window.isOpen()) {
         sf::Event event;
@@ -363,24 +363,28 @@ int main() {
                     player.move(-1, 0);
                 }
 
-                if (maze.isCheckpoint(player.row, player.col))
-                {
+                if (maze.isCheckpoint(player.row, player.col)) {
                     const std::vector<Cell>& cells = maze.getCells();
                     int index = maze.getIndex(player.row, player.col);
                     int questionIndex = index % questions.size(); // Use the index of the checkpoint to get the corresponding question
                     std::string question = questions[questionIndex].getQuestion();
                     std::string answer;
                     std::cout << question << "\n";
-                    std::cin >> answer;
+                    std::getline(std::cin, answer);
                     if (questions[questionIndex].checkAnswer(answer)) {
                         maze.removeCheckpoint(player.row, player.col);
                         std::cout << "Correct!\n";
                     }
                     else {
-                        std::cout << "Wrong! Try again!.\n";
+                        std::cout << "Wrong! Try again later.\n";
                         player.row = 0;
                         player.col = 0;
                     }
+                }
+
+                // Check if the player reached the exit
+                if (player.row == ROWS - 1 && player.col == COLS - 1) {
+                    gameWon = true;
                 }
             }
         }
@@ -392,9 +396,22 @@ int main() {
         else {
             maze.draw(window);
             player.draw(window);
+            if (gameWon) {
+                sf::Font font;
+                if (font.loadFromFile("arial.ttf")) {
+                    sf::Text congratulations("Congratulations! You won!", font, 50);
+                    congratulations.setFillColor(sf::Color::Green);
+                    congratulations.setPosition(150, 250);
+                    window.draw(congratulations);
+                }
+                else {
+                    std::cerr << "Error loading font\n";
+                }
+            }
         }
         window.display();
     }
+
 
     return 0;
 }
