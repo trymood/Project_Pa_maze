@@ -20,6 +20,7 @@ struct Cell {
     bool walls[4];
     bool checkpoint;
 
+
     Cell(int r, int c) : row(r), col(c), visited(false), checkpoint(false) {
         for (int i = 0; i < 4; ++i) walls[i] = true;
     }
@@ -35,11 +36,12 @@ public:
     bool isWall(int row, int col, int dir);
     bool isCheckpoint(int row, int col);
     void removeCheckpoint(int row, int col);
+    const std::vector<Cell>& getCells() const;
+    int getIndex(int row, int col) const;
 
 private:
     std::vector<Cell> cells;
 
-    int getIndex(int row, int col);
     bool isValid(int row, int col);
     void connectNeighbors(Cell& current, Cell& neighbor);
 };
@@ -114,7 +116,11 @@ private:
 std::vector<Question> questions = {
     Question("What is 2 + 2?", "4"),
     Question("What is the capital of France?", "Paris"),
-    Question("What is the color of the sky?", "Blue")
+    Question("What is the color of the sky?", "Blue"),
+    Question("Say my name!", "Heisenberg"),
+    Question("Fa sistem!", "sistem"),
+    Question("Say burgir!", "burgir"),
+    Question("Do you like this game?", "no")
 };
 
 sf::Font& Menu::getFont() {
@@ -233,7 +239,11 @@ void Maze::removeCheckpoint(int row, int col) {
     cells[getIndex(row, col)].checkpoint = false;
 }
 
-int Maze::getIndex(int row, int col) {
+const std::vector<Cell>& Maze::getCells() const {
+    return cells;
+}
+
+int Maze::getIndex(int row, int col) const {
     return row * COLS + col;
 }
 
@@ -355,7 +365,9 @@ int main() {
 
                 if (maze.isCheckpoint(player.row, player.col))
                 {
-                    int questionIndex = rand() % questions.size();
+                    const std::vector<Cell>& cells = maze.getCells();
+                    int index = maze.getIndex(player.row, player.col);
+                    int questionIndex = index % questions.size(); // Use the index of the checkpoint to get the corresponding question
                     std::string question = questions[questionIndex].getQuestion();
                     std::string answer;
                     std::cout << question << "\n";
