@@ -6,6 +6,7 @@
 #include <cstdlib> // For rand()
 #include <ctime>   // For time()
 
+
 const int WIDTH = 800;
 const int HEIGHT = 600;
 const int ROWS = 30;
