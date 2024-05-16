@@ -353,7 +353,7 @@ int main() {
 
     Menu menu;
     Maze maze;
-    Player player(29, 39);
+    Player player(0, 0);
 
     bool gameStarted = false;
     bool gameWon = false;
