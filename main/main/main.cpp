@@ -90,7 +90,7 @@ public:
     Menu();
     void draw(sf::RenderWindow& window);
     int handleInput(sf::RenderWindow& window);
-    friend std::string askQuestion(sf::RenderWindow& window, sf::Font& font, const std::string& question);
+    //friend std::string askQuestion(sf::RenderWindow& window, sf::Font& font, const std::string& question);
     sf::Font& getFont(); // New member function to access the font
 private:
     sf::Text title;
@@ -173,24 +173,27 @@ void Maze::generate() {
     generateExit(); // Generate exit after maze generation
 
     // Define the positions of the checkpoints and their questions
-    std::vector<std::pair<std::pair<int, int>, std::string>> checkpointData = {
-        {{1,3}, "What are the EU Commission objectives regarding green / sustainable energy?\nA1. The EU Commission objectives regarding green / sustainable energy are to totally replace the fossil fuels with wind and solar energy by 2035.\nA2.The EU Commission objectives regarding green / sustainable energy comprise the total banning of fossil fuels and atomic energy and use of renewable sources of energy by 2040.\nA3.The EU Commission objectives regarding green / sustainable energy are to increase the Energy efficiency in any application, to develop all the renewable energy sources by large investment expenses and to diminish with a high speed the fossil fuels energy sources\nA4.The EU Commission objectives regarding green / sustainable energy are to increase the Energy efficiency in all the technological applications, and to replace the fossil fuels use to generate energy by green / sustainable sources, including any renewable sources"},
-        {{8,22}, "What is the definition of green / sustainable energy in comparison with renewable or clean energy?"},
-        {{13,15}, "Which are the most important characteristics of renewable energy?"},
-        {{7,0}, "What are the limitations of wind energy technology?"},
-        {{15,7}, "The hydropower (hydroelectric energy) can be considered as a Green / sustainable energy source?"},
-        {{29,11}, "What are the main characteristics of a biofuel?"},
-        {{21,39}, "What is the definition of green hydrogen?"},
-        {{22,27}, "What is the capital of Australia?"}
-        // Add more checkpoint positions and questions as needed
+    std::vector<std::pair<std::pair<int, int>, std::pair<std::string, std::string>>> checkpointData = {
+    {{1,3}, {"What are the EU Commission objectives regarding green / sustainable energy?\n",
+        "A1.The EU Commission objectives regarding green / sustainable energy are to totally replace the fossil fuels with wind and solar energy by 2035.\nA2.The EU Commission objectives regarding green / sustainable energy comprise the total banning of fossil fuels and atomic energy and use of renewable sources of energy by 2040.\nA3.The EU Commission objectives regarding green / sustainable energy are to increase the Energy efficiency in any application, to develop all the renewable energy sources by large investment expenses and to diminish with a high speed the fossil fuels energy sources\nA4.The EU Commission objectives regarding green / sustainable energy are to increase the Energy efficiency in all the technological applications, and to replace the fossil fuels use to generate energy by green / sustainable sources, including any renewable sources"}},
+    {{8,22}, {"What is the definition of green / sustainable energy in comparison with renewable or clean energy?", ""}},
+    {{13,15}, {"Which are the most important characteristics of renewable energy?", ""}},
+    {{7,0}, {"What are the limitations of wind energy technology?", ""}},
+    {{15,7}, {"The hydropower (hydroelectric energy) can be considered as a Green / sustainable energy source?", ""}},
+    {{29,11}, {"What are the main characteristics of a biofuel?", ""}},
+    {{21,39}, {"What is the definition of green hydrogen?", ""}},
+    {{22,27}, {"What is the capital of Australia?", ""}}
+    // Add more checkpoint positions and questions as needed
     };
+
+
 
     // Set the checkpoints and questions at the specified positions
     for (const auto& data : checkpointData) {
         int row = data.first.first;
         int col = data.first.second;
         cells[getIndex(row, col)].checkpoint = true;
-        cells[getIndex(row, col)].question = data.second;
+        cells[getIndex(row, col)].question = data.second.first;
     }
 }
 
@@ -339,9 +342,9 @@ void Menu::draw(sf::RenderWindow& window) {
 }
 
 // Define a function to ask a question using SFML
-std::string askQuestion(sf::RenderWindow& window, sf::Font& font, const std::string& question) {
+std::pair<std::string, std::string> askQuestion(sf::RenderWindow& window, sf::Font& font, const std::string& question) {
     // Create a text object to display the question
-    sf::Text questionText(question, font, 30);
+    sf::Text questionText(question, font, 18);
     questionText.setFillColor(sf::Color::White); // Set text color to white for visibility
 
     // Set maximum width for text wrapping
@@ -357,7 +360,7 @@ std::string askQuestion(sf::RenderWindow& window, sf::Font& font, const std::str
         float lineWidth = 0;
         std::string word;
         while (iss >> word) {
-            sf::Text tempText(word, font, 30);
+            sf::Text tempText(word, font, 18);
             float wordWidth = tempText.getLocalBounds().width;
             if (lineWidth + wordWidth > maxWidth) {
                 wrappedText += "\n";
@@ -374,7 +377,7 @@ std::string askQuestion(sf::RenderWindow& window, sf::Font& font, const std::str
 
     // Create a text input field for the player's answer
     std::string userAnswer;
-    sf::Text answerText("", font, 10);
+    sf::Text answerText("", font, 18);
     answerText.setFillColor(sf::Color::White); // Set text color to white
     answerText.setPosition((window.getSize().x - questionText.getLocalBounds().width) / 2, 200); // Center horizontally
 
@@ -390,7 +393,7 @@ std::string askQuestion(sf::RenderWindow& window, sf::Font& font, const std::str
                 }
             }
             if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter) {
-                return userAnswer;
+                return { userAnswer, question };
             }
         }
 
@@ -400,8 +403,9 @@ std::string askQuestion(sf::RenderWindow& window, sf::Font& font, const std::str
         window.display();
     }
 
-    return "";
+    return { "", "" };
 }
+
 
 
 
@@ -464,7 +468,8 @@ int main() {
                         if (maze.isCheckpoint(player.row + dy, player.col + dx)) {
                             std::string question = maze.getQuestion(player.row + dy, player.col + dx);
                             std::cout << "Checkpoint reached! Question: " << question << std::endl;
-                            std::string userAnswer = askQuestion(window, menu.getFont(), question);
+                            std::pair<std::string, std::string> answerPair = askQuestion(window, menu.getFont(), question);
+                            std::string userAnswer = answerPair.first;
                             // Check the user's answer here and proceed accordingly
                             // For demonstration purposes, just print the answer
                             std::cout << "User's Answer: " << userAnswer << std::endl;
