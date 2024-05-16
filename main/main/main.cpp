@@ -1,4 +1,3 @@
-
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <iostream>
@@ -33,9 +32,11 @@ public:
     void draw(sf::RenderWindow& window);
     bool isWall(int row, int col, int dir); // Check if there's a wall in a specific direction
     bool isCheckpoint(int row, int col); // Check if a cell is a checkpoint
+    void removeCheckpoint(int row, int col);
 
 private:
     std::vector<Cell> cells;
+    std::unordered_set<int> checkpointIndices;
 
     int getIndex(int row, int col);
     bool isValid(int row, int col);
@@ -102,6 +103,7 @@ Maze::Maze() {
             cells.push_back(Cell(i, j));
         }
     }
+    checkpointIndices = std::unordered_set<int>();
 }
 
 void Maze::generateExit() {
@@ -170,6 +172,11 @@ void Maze::generate() {
         int randCol = rand() % COLS;
         cells[getIndex(randRow, randCol)].checkpoint = true;
     }
+}
+
+void Maze::removeCheckpoint(int row, int col) {
+    int index = getIndex(row, col);
+    cells[index].checkpoint = false;
 }
 
 void Maze::draw(sf::RenderWindow& window) {
@@ -369,6 +376,7 @@ int main() {
                         if (maze.isCheckpoint(player.row + dy, player.col + dx)) {
                             std::cout << "Checkpoint reached!" << std::endl;
                             // Handle checkpoint logic here
+                            maze.removeCheckpoint(player.row + dy, player.col + dx);
                         }
 
                         player.move(dx, dy);
