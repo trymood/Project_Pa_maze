@@ -16,6 +16,7 @@ struct Cell {
     bool visited;
     bool walls[4]; // top, right, bottom, left
     bool checkpoint; // Indicates if the cell is a checkpoint
+    std::string question; // Question associated with the checkpoint
 
     Cell(int r, int c) : row(r), col(c), visited(false), checkpoint(false) {
         for (int i = 0; i < 4; ++i) {
@@ -32,6 +33,7 @@ public:
     void draw(sf::RenderWindow& window);
     bool isWall(int row, int col, int dir); // Check if there's a wall in a specific direction
     bool isCheckpoint(int row, int col); // Check if a cell is a checkpoint
+    std::string getQuestion(int row, int col); // Get the question associated with a checkpoint
 
 private:
     std::vector<Cell> cells;
@@ -46,7 +48,7 @@ public:
     Player(int r, int c) : row(r), col(c) {}
     void move(int dx, int dy); // Move the player
     void draw(sf::RenderWindow& window); // Draw the player
-//private:
+    //private:
     int row, col;
 };
 
@@ -169,26 +171,26 @@ void Maze::generate() {
 
     generateExit(); // Generate exit after maze generation
 
-    // Define the positions of the checkpoints
-    std::vector<std::pair<int, int>> checkpointPositions = {
-        {1,3},
-        {8,22},
-        {13,15},
-        {7,0},
-        {15,7},
-        {29,11},
-        {21,39},
-        {22,27}
-        // Add more checkpoint positions as needed
+    // Define the positions of the checkpoints and their questions
+    std::vector<std::pair<std::pair<int, int>, std::string>> checkpointData = {
+        {{1,3}, "What are the EU Commission objectives regarding green / sustainable energy?"},
+        {{8,22}, "What is the definition of green / sustainable energy in comparison with renewable or clean energy?"},
+        {{13,15}, "Which are the most important characteristics of renewable energy?"},
+        {{7,0}, "What are the limitations of wind energy technology?"},
+        {{15,7}, "The hydropower (hydroelectric energy) can be considered as a Green / sustainable energy source?"},
+        {{29,11}, "What are the main characteristics of a biofuel?"},
+        {{21,39}, "What is the definition of green hydrogen?"},
+        {{22,27}, "What is the capital of Australia?"}
+        // Add more checkpoint positions and questions as needed
     };
 
-    // Set the checkpoints at the specified positions
-    for (const auto& pos : checkpointPositions) {
-        int row = pos.first;
-        int col = pos.second;
+    // Set the checkpoints and questions at the specified positions
+    for (const auto& data : checkpointData) {
+        int row = data.first.first;
+        int col = data.first.second;
         cells[getIndex(row, col)].checkpoint = true;
+        cells[getIndex(row, col)].question = data.second;
     }
-
 }
 
 void Maze::draw(sf::RenderWindow& window) {
@@ -256,6 +258,12 @@ bool Maze::isCheckpoint(int row, int col) {
     if (row < 0 || col < 0 || row >= ROWS || col >= COLS)
         return false;
     return cells[getIndex(row, col)].checkpoint;
+}
+
+std::string Maze::getQuestion(int row, int col) {
+    if (row < 0 || col < 0 || row >= ROWS || col >= COLS)
+        return "";
+    return cells[getIndex(row, col)].question;
 }
 
 int Maze::getIndex(int row, int col) {
@@ -332,7 +340,7 @@ void Menu::draw(sf::RenderWindow& window) {
 // Define a function to ask a question using SFML
 std::string askQuestion(sf::RenderWindow& window, sf::Font& font, const std::string& question) {
     // Create a text object to display the question
-    sf::Text questionText(question, font, 30);
+    sf::Text questionText(question, font, 18);
     questionText.setFillColor(sf::Color::White);
     questionText.setPosition(100, 100); // Adjust position as needed
 
@@ -425,10 +433,12 @@ int main() {
 
                         // Check for checkpoint
                         if (maze.isCheckpoint(player.row + dy, player.col + dx)) {
-                            std::cout << "Checkpoint reached!" << std::endl;
-                            // Handle checkpoint logic here
-                            std::string userAnswer = askQuestion(window, menu.getFont(), "What is the capital of France?");
-                                // Check the user's answer here and proceed accordingly
+                            std::string question = maze.getQuestion(player.row + dy, player.col + dx);
+                            std::cout << "Checkpoint reached! Question: " << question << std::endl;
+                            std::string userAnswer = askQuestion(window, menu.getFont(), question);
+                            // Check the user's answer here and proceed accordingly
+                            // For demonstration purposes, just print the answer
+                            std::cout << "User's Answer: " << userAnswer << std::endl;
                         }
 
                         player.move(dx, dy);
@@ -449,3 +459,4 @@ int main() {
 
     return 0;
 }
+
