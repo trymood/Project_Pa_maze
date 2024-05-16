@@ -4,6 +4,7 @@
 #include <stack>
 #include <unordered_set>
 #include <cstdlib> // For rand()
+#include <sstream>
 
 const int WIDTH = 800;    // Width of the window
 const int HEIGHT = 600;   // Height of the window
@@ -173,7 +174,7 @@ void Maze::generate() {
 
     // Define the positions of the checkpoints and their questions
     std::vector<std::pair<std::pair<int, int>, std::string>> checkpointData = {
-        {{1,3}, "What are the EU Commission objectives regarding green / sustainable energy?"},
+        {{1,3}, "What are the EU Commission objectives regarding green / sustainable energy?\nA1. The EU Commission objectives regarding green / sustainable energy are to totally replace the fossil fuels with wind and solar energy by 2035.\nA2.The EU Commission objectives regarding green / sustainable energy comprise the total banning of fossil fuels and atomic energy and use of renewable sources of energy by 2040.\nA3.The EU Commission objectives regarding green / sustainable energy are to increase the Energy efficiency in any application, to develop all the renewable energy sources by large investment expenses and to diminish with a high speed the fossil fuels energy sources\nA4.The EU Commission objectives regarding green / sustainable energy are to increase the Energy efficiency in all the technological applications, and to replace the fossil fuels use to generate energy by green / sustainable sources, including any renewable sources"},
         {{8,22}, "What is the definition of green / sustainable energy in comparison with renewable or clean energy?"},
         {{13,15}, "Which are the most important characteristics of renewable energy?"},
         {{7,0}, "What are the limitations of wind energy technology?"},
@@ -340,15 +341,42 @@ void Menu::draw(sf::RenderWindow& window) {
 // Define a function to ask a question using SFML
 std::string askQuestion(sf::RenderWindow& window, sf::Font& font, const std::string& question) {
     // Create a text object to display the question
-    sf::Text questionText(question, font, 18);
-    questionText.setFillColor(sf::Color::White);
-    questionText.setPosition(100, 100); // Adjust position as needed
+    sf::Text questionText(question, font, 30);
+    questionText.setFillColor(sf::Color::White); // Set text color to white for visibility
+
+    // Set maximum width for text wrapping
+    float maxWidth = window.getSize().x - 200;
+    questionText.setPosition(100, 100); // Set initial position
+
+    // Check if text exceeds maximum width
+    if (questionText.getLocalBounds().width > maxWidth) {
+        // Create a text string with word wrapping
+        std::string wrappedText;
+        std::istringstream iss(question);
+        std::ostringstream oss;
+        float lineWidth = 0;
+        std::string word;
+        while (iss >> word) {
+            sf::Text tempText(word, font, 30);
+            float wordWidth = tempText.getLocalBounds().width;
+            if (lineWidth + wordWidth > maxWidth) {
+                wrappedText += "\n";
+                lineWidth = 0;
+            }
+            wrappedText += word + " ";
+            lineWidth += wordWidth;
+        }
+        questionText.setString(wrappedText);
+    }
+
+    // Adjust text position for centered alignment
+    questionText.setPosition((window.getSize().x - questionText.getLocalBounds().width) / 2, 100);
 
     // Create a text input field for the player's answer
     std::string userAnswer;
-    sf::Text answerText("", font, 30);
-    answerText.setFillColor(sf::Color::White);
-    answerText.setPosition(100, 200); // Adjust position as needed
+    sf::Text answerText("", font, 10);
+    answerText.setFillColor(sf::Color::White); // Set text color to white
+    answerText.setPosition((window.getSize().x - questionText.getLocalBounds().width) / 2, 200); // Center horizontally
 
     while (window.isOpen()) {
         sf::Event event;
@@ -374,6 +402,7 @@ std::string askQuestion(sf::RenderWindow& window, sf::Font& font, const std::str
 
     return "";
 }
+
 
 
 int Menu::handleInput(sf::RenderWindow& window) {
